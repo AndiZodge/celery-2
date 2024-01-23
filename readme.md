@@ -1,7 +1,9 @@
 <!-- Run celery command -->
-celery -A main.celery worker -l info 
-celery -A main.celery worker -l info --loglevel=DEBUG
-<!-- celery -A tasks.tasks worker -l info --loglevel=DEBUG -->
+celery -A task.celery worker -l info -P solo
+celery -A task.celery worker -l info --loglevel=INFO
+
+<!-- Run beat for scheduler -->
+celery -A task.celery beat --loglevel=info
 
 <!-- Run fastapi server -->
 uvicorn main:app --reload
