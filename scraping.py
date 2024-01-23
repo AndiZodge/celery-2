@@ -1,48 +1,51 @@
 import requests
-import logging
+from requests.exceptions import Timeout
 
 from database import SessionLocal, NewsDB
-from NewsBaseModel import NewsModel
-from config import API_KEY
+from news_base_model import NewsModel
+from utils import get_logger
 
-logging.basicConfig(level=logging.INFO)
+log = get_logger(logger_name="scraping_class", module="scraping_class")
+
 
 class ScrapingData:
     
-    def __init__(self) -> None:
+    def __init__(self, url: str) -> None:
         self.data = None
         self.parse_data = None
-        self.url  = f'https://newsapi.org/v2/top-headlines?country=us&apiKey={API_KEY}'
-        # self.start_process()
+        self.url = url 
         
-    def start_process(self):
+    def start_process(self) -> None:
         try:
             self.start_scraping_process()
             self.curate_scraped_data()
             self.save_scraped_data()
             
         except Exception as ex:
-            logging.info(ex)
+            log.error(ex)
         
     def start_scraping_process(self) -> None:
         try:
-            response = requests.get(self.url)
-            response.raise_for_status()
-            scraped_data = response.json()
-            if scraped_data.get('status') == 'ok':
-                logging.info('data scraped successfully')
+            with requests.get(self.url) as response:
+                response.raise_for_status()
+                scraped_data = response.json()
+                log.info('data scraped successfully')
                 self.data = scraped_data.get('articles', [])
-    
+                    
+        except Timeout as tec:
+            # We can add sleep of few seconds and can call api again if req
+            log.error(tec)
+            
         except Exception as ex:
-            logging.error(ex)
+            log.error(ex)
 
     def curate_scraped_data(self) -> None:
         try:
             parse_news_blog = [NewsModel(**news_blog) for news_blog in self.data]
             self.parse_data = parse_news_blog
-            logging.info('parsing completed')
+            log.info('parsing completed')
         except Exception as ex:
-            logging.info(ex)
+            log.error(ex)
 
     def save_scraped_data(self) -> None:
         try:
@@ -60,10 +63,10 @@ class ScrapingData:
                 )
                 db.add(news_article)
                 
-            logging.info('all items added in DB, now commiting all changes')
+            log.info('all items added in DB, now commiting all changes')
             db.commit()
         except Exception as exx:
-            logging.error(exx)
+            log.error(exx)
         finally:
             db.close()
     
