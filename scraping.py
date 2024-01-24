@@ -1,5 +1,5 @@
 import requests
-from requests.exceptions import Timeout
+from requests.exceptions import Timeout, ConnectionError
 
 from database import SessionLocal, NewsDB
 from news_base_model import NewsModel
@@ -36,8 +36,8 @@ class ScrapingData:
             # We can add sleep of few seconds and can call api again if req
             log.error(tec)
             
-        except Exception as ex:
-            log.error(ex)
+        except ConnectionError as cex:
+            log.error(cex)
 
     def curate_scraped_data(self) -> None:
         try:

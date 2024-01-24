@@ -1,15 +1,9 @@
-from utils import celery
+from utils import get_celery
 from config import API_KEY
 from scraping import ScrapingData
-from celery.schedules import crontab
 
-# This beat scheduler will invoke given task after every 1 min
-celery.conf.beat_schedule = {
-    'run-every-minute': {
-        'task': 'task.scrape_and_save_data',
-        'schedule': crontab(),
-    },
-}
+celery = get_celery()
+
 
 @celery.task
 def scrape_and_save_data() -> str:
